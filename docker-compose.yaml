@@ -1,0 +1,43 @@
+version: "3.4"
+
+services:
+  api:
+    build: .
+    container_name: sberCloudApp
+    networks:
+      - my_network
+    hostname: sberCloudApplication
+    ports:
+      - "8080:8080"
+    restart: on-failure
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - './pgdata:/var/lib/postgresql/data'
+    ports:
+      - '5555:5432'
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ad@min.ru
+      PGADMIN_DEFAULT_PASSWORD: pgpassword
+    volumes:
+      - './pgadmin:/var/lib/pgadmin'
+    ports:
+      - 8081:80
+volumes:
+  postgres_storage:
+    name: sberCloudApplicationVolume
+
+networks:
+  my_network:
+    driver: bridge
+
+
+version: '3'
+
+

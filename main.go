@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const pathConfig string = "/Users/vadimcelnik/go/sberCloudServer/config.yaml"
+const nameConfig string = "/config.yaml"
 
 func (d *Data) middlewareHandler(handler http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,7 @@ func (d *Data) writeInFileMap() {
 }
 func main() {
 	address := config.NewPointerAddress() // работа с конфигом
-	err := address.LoadConfig(pathConfig)
+	err := address.LoadConfig(takeCurrentDirectory() + nameConfig)
 	if err != nil {
 		log.Fatalln("Error with LoadConfig", err)
 	}
@@ -60,4 +60,14 @@ func main() {
 	if err != nil {
 		log.Fatalln("error with server")
 	}
+}
+
+// takeCurrentDirectory получает путь до текущей директории
+func takeCurrentDirectory() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	return pwd
 }
