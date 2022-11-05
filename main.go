@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"runtime/debug"
 	"time"
 
 	"github.com/chelnik/sbercloudServer/config"
@@ -45,7 +44,11 @@ func (d *Data) writeInFileMap() {
 }
 func main() {
 	address := config.NewPointerAddress() // работа с конфигом
-	address.LoadConfig(pathConfig)
+	err := address.LoadConfig(pathConfig)
+	if err != nil {
+		log.Fatalln("Error with LoadConfig", err)
+	}
+
 	mapa := &Data{make(map[string]StructForJson)}
 
 	router := mux.NewRouter() // горилла
@@ -53,9 +56,8 @@ func main() {
 	mapa.addHandlers(router)
 	coveredMux := mapa.middlewareHandler(router)
 	fmt.Printf("server listen at http://localhost%s\n", address.Port)
-	err := http.ListenAndServe(address.Port, coveredMux)
+	err = http.ListenAndServe(address.Port, coveredMux)
 	if err != nil {
-		log.Println("error with server")
-		debug.PrintStack() // выводит стек трейс
+		log.Fatalln("error with server")
 	}
 }
