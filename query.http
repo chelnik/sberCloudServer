@@ -1,0 +1,43 @@
+###
+
+# curl http://localhost:8080/config?service=managed-k8s
+GET http://localhost:8080/config?service=managed-k8s
+
+###
+
+POST http://localhost:8080/config
+Content-Type: application/json
+
+{
+  "service": "managed-k8s",
+  "data": [
+    {"key1": "value1"},
+    {"key2": "value2"}
+  ]
+}
+
+###
+
+POST http://localhost:8080/config
+Content-Type: application/json
+
+{
+  "service": "nginx",
+  "data": [
+    {"key1": "value1"},
+    {"key2": "value2"}
+  ]
+}
+###
+
+POST http://localhost:8080/config
+Content-Type: application/json
+
+{
+  "service": "docker",
+  "data": [
+    {"key1": "value1"},
+    {"key2": "value2"}
+  ]
+}
+###
