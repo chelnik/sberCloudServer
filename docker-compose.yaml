@@ -7,10 +7,14 @@ services:
     networks:
       - my_network
     hostname: sberCloudApplication
+    depends_on:
+      -   postgres
+    environment:
+      - POSTGRES_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable
     ports:
       - "8080:8080"
     restart: on-failure
-
+# внутри микросервиса стучаться до postgres://postgres:5432
   postgres:
     image: postgres:15-alpine
     container_name:   postgresnamecontainer
@@ -19,16 +23,20 @@ services:
       POSTGRES_PASSWORD: passwd
       POSTGRES_DB: sberdatabase
       PGDATA: /data/postgres
+    networks:
+      - my_network
     volumes:
       - ./postgres:/data/postgres
     ports:
-      - "5442:5432" # если мы подключаемся внутри контейнера, то можно сразу стучаться на порт 5432 из pgadmin
-
+#      - хост порт|порт контейнера
+      - "5432:5432" # если мы подключаемся внутри контейнера, то можно сразу стучаться на порт 5432 из pgadmin
   pgadmin:
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ad@min.ru
       PGADMIN_DEFAULT_PASSWORD: pgpassword
+    networks:
+      - my_network
     volumes:
       - './pgadmin:/var/lib/pgadmin'
     ports:

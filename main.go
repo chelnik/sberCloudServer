@@ -40,7 +40,16 @@ func main() {
 	var host = "postgres"
 	dsn := "postgres://user:passwd@" + host + ":" + port + "/" + database +
 		"?sslmode=disable"
-
+	// dsn := "postgresql://user:passwd@" + host + ":" + port + "/" + database +
+	// 	"?sslmode=disable"
+	// dsn := os.Getenv("POSTGRES_URI")
+	// fmt.Println("My dsn:\t", dsn)
+	// dsn := "postgres://user:passwd@postgres:5432/sberdatabase?sslmode=disable"
+	// username
+	// password
+	// host
+	// port
+	// database =
 	// dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", username, password, host, port, database)
 	conn, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
