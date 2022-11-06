@@ -10,15 +10,19 @@ services:
     ports:
       - "8080:8080"
     restart: on-failure
-  db:
-    image: postgres:14
+
+  postgres:
+    image: postgres:15-alpine
+    container_name:   postgresnamecontainer
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: passwd
+      POSTGRES_DB: sberdatabase
+      PGDATA: /data/postgres
     volumes:
-      - './pgdata:/var/lib/postgresql/data'
+      - ./postgres:/data/postgres
     ports:
-      - '5555:5432'
+      - "5442:5432" # если мы подключаемся внутри контейнера, то можно сразу стучаться на порт 5432 из pgadmin
 
   pgadmin:
     image: dpage/pgadmin4
@@ -37,7 +41,5 @@ networks:
   my_network:
     driver: bridge
 
-
-version: '3'
 
 

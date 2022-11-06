@@ -2,11 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v4"
 )
 
 // StructForJson структура для хранения запроса
@@ -20,7 +23,15 @@ type StructForJson struct {
 
 // Data для хранения config
 type Data struct {
-	Mapa map[string]StructForJson
+	conn *pgx.Conn
+}
+
+func (d *Data) middlewareHandler(handler http.Handler) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		handler.ServeHTTP(w, r)
+		fmt.Printf("[%s] %s %s %s\n\n", r.Method, r.RemoteAddr, r.URL.Path, time.Since(start))
+	})
 }
 
 func (d *Data) addHandlers(router *mux.Router) {
@@ -35,23 +46,14 @@ func (d *Data) addHandlers(router *mux.Router) {
 func (d *Data) createConfig(w http.ResponseWriter, r *http.Request) {
 	var item = new(StructForJson)
 	bytes, err := io.ReadAll(r.Body)
-
 	if err != nil {
 		log.Println("error with readAll r.Body")
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 	err = json.Unmarshal(bytes, item)
-	if checkItem := d.Mapa[item.Service]; checkItem.Service != "" { // проверка на дублирование сервиса
-		http.Error(w, "service already exists", http.StatusBadRequest)
-		return
-	}
-	d.Mapa[item.Service] = *item // кладем указатель на новый элемент в мапу
-	if err != nil {
-		log.Println("error with Unmarshal")
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
+	d.insertConfigDb(item)
+
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte("created"))
 	if err != nil {
@@ -62,7 +64,7 @@ func (d *Data) createConfig(w http.ResponseWriter, r *http.Request) {
 // getConfig получение config
 func (d *Data) getConfig(w http.ResponseWriter, r *http.Request) {
 	service := r.URL.Query().Get("service") // считывание параметра
-	response := d.Mapa[service]
+	response := d.selectConfig(service)
 	if response.Service == "" {
 		http.Error(w, "the data does not exist", http.StatusBadRequest)
 		return
@@ -78,25 +80,20 @@ func (d *Data) getConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
 func (d *Data) deleteConfig(w http.ResponseWriter, r *http.Request) {
 	service := r.URL.Query().Get("service") // считывание параметра
-	response := d.Mapa[service]
-	if response.Service == "" {
-		http.Error(w, "the data does not exist", http.StatusBadRequest)
+
+	d.deleteConfigDb(service)
+	w.WriteHeader(http.StatusOK)
+	_, err := w.Write([]byte("deleted"))
+	if err != nil {
 		return
 	}
-	delete(d.Mapa, service)
+
 }
 
 func (d *Data) updateConfig(w http.ResponseWriter, r *http.Request) {
 	var item = new(StructForJson)
-	service := r.URL.Query().Get("service") // считывание параметра
-	response := d.Mapa[service]
-	if response.Service == "" {
-		http.Error(w, "the data does not exist", http.StatusBadRequest)
-		return
-	}
 	bytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Println("error with readAll r.Body")
@@ -104,9 +101,6 @@ func (d *Data) updateConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = json.Unmarshal(bytes, item)
-	if err != nil {
-		http.Error(w, "service already exists", http.StatusBadRequest)
-		return
-	}
-	d.Mapa[service].Data[0], d.Mapa[service].Data[1] = item.Data[0], item.Data[1]
+	d.insertConfigDb(item)
+
 }

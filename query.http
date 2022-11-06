@@ -4,6 +4,10 @@
 GET http://localhost:8080/config?service=managed-k8s
 
 ###
+POST http://localhost:8080/delete?service=managed-k8s
+Content-Type: application/json
+
+###
 
 POST http://localhost:8080/config
 Content-Type: application/json

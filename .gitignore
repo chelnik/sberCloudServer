@@ -1,1 +1,4 @@
 .idea/
+pgadmin/
+pgdata/
+postgres

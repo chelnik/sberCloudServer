@@ -1,1 +1,0 @@
-managed-k8s{managed-k8s [{value1 } { value2}]}

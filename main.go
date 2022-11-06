@@ -1,60 +1,65 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/chelnik/sbercloudServer/config"
+	"github.com/chelnik/sbercloudServer/utils"
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v4"
 )
 
-const nameConfig string = "/config.yaml"
+const (
+	nameConfig    string = "/config.yaml"
+	selectConfigs string = `CREATE TABLE IF NOT EXISTS configs(
+								service VARCHAR(80),
+								data JSON,
+								version INT
+							)`
+	insertConfigs = `INSERT INTO configs (Service, Data, Version) VALUES (
+	        $1, -- Service
+			$2, -- Version
+			$3 -- Data
+			)`
+	selectMaxConfig = `SELECT * FROM configs WHERE service=$1 ORDER BY version DESC LIMIT 1`
+	deleteMaxConfig = `DELETE FROM configs WHERE service=$1 AND version=$2`
+)
 
-func (d *Data) middlewareHandler(handler http.Handler) http.HandlerFunc {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("middlewareHandler", r.URL.Path)
-		start := time.Now()
-		handler.ServeHTTP(w, r)
-		fmt.Printf("[%s] %s %s %s\n\n", r.Method, r.RemoteAddr, r.URL.Path, time.Since(start))
-		d.writeInFileMap()
-	})
-}
-
-// writeInFileMap записывает данные в файл что-бы видеть что находится в мапе
-func (d *Data) writeInFileMap() {
-	file, err := os.Create("text.txt")
-	if err != nil {
-		log.Println("file open error")
-	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			log.Println("error when closing the file")
-		}
-	}(file)
-	for i, item := range d.Mapa {
-		_, err = file.Write([]byte(fmt.Sprintf("%s%v\n", i, item)))
-		if err != nil {
-			log.Println("file write error")
-		}
-	}
-}
 func main() {
 	address := config.NewPointerAddress() // работа с конфигом
-	err := address.LoadConfig(takeCurrentDirectory() + nameConfig)
+	err := address.LoadConfig(utils.TakeCurrentDirectory() + nameConfig)
 	if err != nil {
 		log.Fatalln("Error with LoadConfig", err)
 	}
+	// --------------открываю базу
+	var database = "sberdatabase"
+	var port = "5432"
+	var host = "postgres"
+	dsn := "postgres://user:passwd@" + host + ":" + port + "/" + database +
+		"?sslmode=disable"
 
-	mapa := &Data{make(map[string]StructForJson)}
+	// dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", username, password, host, port, database)
+	conn, err := pgx.Connect(context.Background(), dsn)
+	if err != nil {
+		fmt.Printf("Запрос dsn: %s\n", dsn)
+		log.Fatalf("Unable to connect to database: %v\n", err)
+	}
+	defer conn.Close(context.Background())
 
-	router := mux.NewRouter() // горилла
+	if err = conn.Ping(context.Background()); err != nil {
+		log.Fatalf("can't ping db: %s", err)
+	}
+	// --------------------
 
-	mapa.addHandlers(router)
-	coveredMux := mapa.middlewareHandler(router)
+	data := &Data{conn}
+	data.InitDb()
+	router := mux.NewRouter() // подключаю роутер горилла
+
+	data.addHandlers(router)
+	coveredMux := data.middlewareHandler(router)
 	fmt.Printf("server listen at http://localhost%s\n", address.Port)
 	err = http.ListenAndServe(address.Port, coveredMux)
 	if err != nil {
@@ -62,12 +67,11 @@ func main() {
 	}
 }
 
-// takeCurrentDirectory получает путь до текущей директории
-func takeCurrentDirectory() string {
-	pwd, err := os.Getwd()
+// InitDb создаем бд если не создана
+func (d *Data) InitDb() {
+	rows, err := d.conn.Query(context.Background(), selectConfigs)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
-	return pwd
+	defer rows.Close()
 }
