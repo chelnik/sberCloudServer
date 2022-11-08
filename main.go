@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/chelnik/sbercloudServer/config"
 	"github.com/chelnik/sbercloudServer/utils"
@@ -35,27 +36,15 @@ func main() {
 		log.Fatalln("Error with LoadConfig", err)
 	}
 	// --------------открываю базу
-	var database = "sberdatabase"
-	var port = "5432"
-	var host = "postgres"
-	dsn := "postgres://user:passwd@" + host + ":" + port + "/" + database +
-		"?sslmode=disable"
-	// dsn := "postgresql://user:passwd@" + host + ":" + port + "/" + database +
-	// 	"?sslmode=disable"
-	// dsn := os.Getenv("POSTGRES_URI")
-	// fmt.Println("My dsn:\t", dsn)
-	// dsn := "postgres://user:passwd@postgres:5432/sberdatabase?sslmode=disable"
-	// username
-	// password
-	// host
-	// port
-	// database =
-	// dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s", username, password, host, port, database)
+
+	dsn := os.Getenv("POSTGRES_URI")
 	conn, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
-		fmt.Printf("Запрос dsn: %s\n", dsn)
+		fmt.Printf("Подключение не установилось:\t %s\n", dsn)
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
+	fmt.Println("Подключение с базой данных установленно:\t", dsn)
+
 	defer conn.Close(context.Background())
 
 	if err = conn.Ping(context.Background()); err != nil {
@@ -69,7 +58,9 @@ func main() {
 
 	data.addHandlers(router)
 	coveredMux := data.middlewareHandler(router)
-	fmt.Printf("server listen at http://localhost%s\n", address.Port)
+	// fmt.Printf("server listen at http://localhost%s\n", address.Port)
+	log.Printf("server listen at http://localhost%s\n", address.Port)
+
 	err = http.ListenAndServe(address.Port, coveredMux)
 	if err != nil {
 		log.Fatalln("error with server")

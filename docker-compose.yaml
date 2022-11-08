@@ -3,7 +3,7 @@ version: "3.4"
 services:
   api:
     build: .
-    container_name: sberCloudApp
+    container_name: appContainer
     networks:
       - my_network
     hostname: sberCloudApplication
@@ -17,7 +17,7 @@ services:
 # внутри микросервиса стучаться до postgres://postgres:5432
   postgres:
     image: postgres:15-alpine
-    container_name:   postgresnamecontainer
+    container_name: postgresContainer
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: passwd
@@ -31,6 +31,7 @@ services:
 #      - хост порт|порт контейнера
       - "5432:5432" # если мы подключаемся внутри контейнера, то можно сразу стучаться на порт 5432 из pgadmin
   pgadmin:
+    container_name: pgadminContainer
     image: dpage/pgadmin4
     environment:
       PGADMIN_DEFAULT_EMAIL: ad@min.ru
@@ -49,5 +50,4 @@ networks:
   my_network:
     driver: bridge
 
-
-
+# контейнеры должны быть в одной сети
