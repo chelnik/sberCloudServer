@@ -40,10 +40,10 @@ func main() {
 	dsn := os.Getenv("POSTGRES_URI")
 	conn, err := pgx.Connect(context.Background(), dsn)
 	if err != nil {
-		fmt.Printf("Подключение не установилось:\t %s\n", dsn)
+		fmt.Printf("Connection failed: \t %s\n", dsn)
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
-	fmt.Println("Подключение с базой данных установленно:\t", dsn)
+	fmt.Println("Connection to the database is established: \t", dsn)
 
 	defer conn.Close(context.Background())
 

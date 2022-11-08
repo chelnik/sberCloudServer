@@ -1,7 +1,11 @@
 Сервер для динамически управлять конфигурацией приложений
 
-Как запустить сервис 
-git clone 
+<!-- TOC -->
+    * [Пример использования сервиса](#--)
+      * [Получение конфига](#-)
+      * [Создание конфига](#-)
+    * [Запуск сервиса:](http://localhost:2000)
+<!-- TOC -->
 
 Сервер реализован на языке GoLang и использует в качестве хранилища базу данных PostgreSQL. 
 Конфигурации хранятся в формате JSON.
@@ -33,6 +37,26 @@ git clone
 }
 ```
 
+PATCH http://localhost:8080/config
+
+Content-Type: application/json
+
+```json
+
+{
+  "service": "managed-k8s",
+  "data": [
+    {"key1": "value101"},
+    {"key2": "value202"}
+  ]
+}
+```
+
+
+```json
+curl -X DELETE --location "http://localhost:8080/config?service=managed-k8s" \
+    -H "Content-Type: application/json"
+```
 ### Запуск сервиса:
 ```git clone git@github.com:chelnik/sberCloudServer.git```
 

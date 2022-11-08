@@ -3,12 +3,9 @@
 # curl http://localhost:8080/config?service=managed-k8s
 GET http://localhost:8080/config?service=managed-k8s
 
-###
-POST http://localhost:8080/delete?service=managed-k8s
-Content-Type: application/json
+
 
 ###
-
 POST http://localhost:8080/config
 Content-Type: application/json
 
@@ -19,7 +16,30 @@ Content-Type: application/json
     {"key2": "value2"}
   ]
 }
+###
 
+PATCH http://localhost:8080/config
+Content-Type: application/json
+
+{
+  "service": "managed-k8s",
+  "data": [
+    {"key1": "value101"},
+    {"key2": "value202"}
+  ]
+}
+###
+
+PATCH http://localhost:8080/config
+Content-Type: application/json
+
+{
+  "service": "managed-k8s",
+  "data": [
+    {"key1": "value10100"},
+    {"key2": "value20200"}
+  ]
+}
 ###
 
 POST http://localhost:8080/config
@@ -45,3 +65,6 @@ Content-Type: application/json
   ]
 }
 ###
+
+DELETE http://localhost:8080/config?service=managed-k8s
+Content-Type: application/json

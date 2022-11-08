@@ -30,14 +30,14 @@ func (d *Data) middlewareHandler(handler http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		handler.ServeHTTP(w, r)
-		fmt.Printf("[%s] %s %s %s\n\n", r.Method, r.RemoteAddr, r.URL.Path, time.Since(start))
+		fmt.Printf("[%s] %s %s %s %s\n\n", r.Method, r.UserAgent(), r.RemoteAddr, r.URL.Path, time.Since(start))
 	})
 }
 
 func (d *Data) addHandlers(router *mux.Router) {
 	router.HandleFunc("/config", d.createConfig).Methods("POST")
-	router.HandleFunc("/delete", d.deleteConfig).Methods("POST")
-	router.HandleFunc("/update", d.updateConfig).Methods("POST")
+	router.HandleFunc("/config", d.deleteConfig).Methods("DELETE")
+	router.HandleFunc("/config", d.updateConfig).Methods("PATCH")
 
 	router.HandleFunc("/config", d.getConfig).Methods("GET")
 }
@@ -102,5 +102,4 @@ func (d *Data) updateConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	err = json.Unmarshal(bytes, item)
 	d.insertConfigDb(item)
-
 }
